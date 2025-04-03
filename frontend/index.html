@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechLogistics - Gestión</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-4">🚚 Gestión de Clientes - TechLogistics</h1>
+
+    <!-- Sección Clientes -->
+    <button class="btn btn-primary mb-3" onclick="consultarClientes()">Consultar Clientes</button>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Teléfono</th>
+          <th>Dirección</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="clientesBody"></tbody>
+    </table>
+
+    <h3>Registrar Nuevo Cliente</h3>
+    <div class="row mb-3">
+      <div class="col"><input type="text" id="id" placeholder="ID" class="form-control"></div>
+      <div class="col"><input type="text" id="nombre" placeholder="Nombre" class="form-control"></div>
+      <div class="col"><input type="text" id="correo" placeholder="Correo" class="form-control"></div>
+      <div class="col"><input type="text" id="telefono" placeholder="Teléfono" class="form-control"></div>
+      <div class="col"><input type="text" id="direccion" placeholder="Dirección" class="form-control"></div>
+      <div class="col"><button class="btn btn-success" onclick="registrarCliente()">Registrar</button></div>
+    </div>
+
+    <h3>Actualizar Cliente</h3>
+    <div class="row mb-3">
+      <div class="col"><input type="text" id="editId" placeholder="ID" class="form-control"></div>
+      <div class="col"><input type="text" id="editNombre" placeholder="Nombre" class="form-control"></div>
+      <div class="col"><input type="text" id="editCorreo" placeholder="Correo" class="form-control"></div>
+      <div class="col"><input type="text" id="editTelefono" placeholder="Teléfono" class="form-control"></div>
+      <div class="col"><input type="text" id="editDireccion" placeholder="Dirección" class="form-control"></div>
+      <div class="col"><button class="btn btn-warning" onclick="actualizarCliente()">Actualizar</button></div>
+    </div>
+
+    <!-- Sección Rastreo -->
+    <h3 class="mt-4">📦 Rastreo de Envíos</h3>
+    <div class="row mb-3">
+      <div class="col-2"><input type="text" id="pedidoId" placeholder="ID Pedido" class="form-control"></div>
+      <div class="col-2"><button class="btn btn-info" onclick="consultarRastreo()">Consultar Rastreo</button></div>
+    </div>
+
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>ID Pedido</th>
+          <th>Cliente</th>
+          <th>Transportista</th>
+          <th>Origen</th>
+          <th>Destino</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="rastreoBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function consultarClientes() {
+      const res = await fetch('http://localhost:3000/clientes');
+      const data = await res.json();
+      const body = document.getElementById('clientesBody');
+      body.innerHTML = '';
+      data.forEach(c => {
+        body.innerHTML += `<tr>
+          <td>${c[0]}</td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td>${c[4]}</td>
+          <td>
+            <button class='btn btn-danger btn-sm' onclick='eliminarCliente(${c[0]})'>Eliminar</button>
+            <button class='btn btn-secondary btn-sm' onclick='editarCliente(${c[0]}, "${c[1]}", "${c[2]}", "${c[3]}", "${c[4]}")'>Editar</button>
+          </td>
+        </tr>`
+      })
+    }
+
+    async function registrarCliente() {
+      const cliente = {
+        id_cliente: document.getElementById('id').value,
+        nombre: document.getElementById('nombre').value,
+        correo: document.getElementById('correo').value,
+        telefono: document.getElementById('telefono').value,
+        direccion: document.getElementById('direccion').value
+      };
+      await fetch('http://localhost:3000/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cliente)
+      });
+      consultarClientes();
+    }
+
+    async function eliminarCliente(id) {
+      await fetch(`http://localhost:3000/clientes/${id}`, { method: 'DELETE' });
+      consultarClientes();
+    }
+
+    function editarCliente(id, nombre, correo, telefono, direccion) {
+      document.getElementById('editId').value = id;
+      document.getElementById('editNombre').value = nombre;
+      document.getElementById('editCorreo').value = correo;
+      document.getElementById('editTelefono').value = telefono;
+      document.getElementById('editDireccion').value = direccion;
+    }
+
+    async function actualizarCliente() {
+      const id = document.getElementById('editId').value;
+      const cliente = {
+        nombre: document.getElementById('editNombre').value,
+        correo: document.getElementById('editCorreo').value,
+        telefono: document.getElementById('editTelefono').value,
+        direccion: document.getElementById('editDireccion').value
+      };
+      await fetch(`http://localhost:3000/clientes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cliente)
+      });
+      consultarClientes();
+    }
+
+    async function consultarRastreo() {
+      const id = document.getElementById('pedidoId').value;
+      const res = await fetch(`http://localhost:3000/rastreo/${id}`);
+      const data = await res.json();
+      const body = document.getElementById('rastreoBody');
+      body.innerHTML = '';
+      if (data.length > 0) {
+        body.innerHTML += `<tr>
+          <td>${data[0]}</td><td>${data[1]}</td><td>${data[2]}</td><td>${data[3]}</td><td>${data[4]}</td><td>${data[5]}</td>
+        </tr>`
+      } else {
+        body.innerHTML = '<tr><td colspan="6">Pedido no encontrado</td></tr>'
+      }
+    }
+  </script>
+</body>
+
+</html>
